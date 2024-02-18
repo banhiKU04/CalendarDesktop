@@ -1,3 +1,4 @@
+# schedule.py
 from datetime import datetime, timedelta
 from event import Event
 import calendar
@@ -6,8 +7,8 @@ class Schedule:
     def __init__(self):
         self.event_manager = Event()
 
-    def set_event(self, date, description):
-        self.event_manager.add_event(date, description)
+    def set_event(self, date, description, is_birthday=False, person_name=None):
+        self.event_manager.add_event(date, description, is_birthday, person_name)
 
     def get_events(self, date):
         return self.event_manager.get_events(date)
@@ -15,7 +16,7 @@ class Schedule:
     def show_events(self, date):
         events = self.get_events(date)
         if events:
-            return "\n".join(events)
+            return "\n".join([f"{event[0]} ({event[2]})" for event in events])
         else:
             return "No events on this day."
 
@@ -25,6 +26,6 @@ class Schedule:
             date = datetime(month.year, month.month, day).date()
             events = self.get_events(date)
             if events:
-                event_text = f"Events for {date}:\n" + "\n".join(events)
+                event_text = f"Events for {date}:\n" + "\n".join([f"{event[0]} ({event[2]})" for event in events])
                 all_events.append(event_text)
         return "\n".join(all_events)

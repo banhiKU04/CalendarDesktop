@@ -1,7 +1,10 @@
+# calendar_gui.py
 import tkinter as tk
 import calendar
 from datetime import datetime, timedelta
 from event import Event
+from schedule import Schedule
+from tkinter.simpledialog import askstring
 
 class CalendarGUI:
     def __init__(self, master, schedule_manager):
@@ -27,6 +30,9 @@ class CalendarGUI:
 
         self.show_all_events_button = tk.Button(self.master, text="Show All Events", command=self.show_all_events)
         self.show_all_events_button.pack()
+
+        self.add_birthday_button = tk.Button(self.master, text="Add Birthday", command=self.add_birthday)
+        self.add_birthday_button.pack(side=tk.LEFT)
 
         self.update_calendar()
 
@@ -74,8 +80,18 @@ class CalendarGUI:
             description = self.event_display.get("1.0", tk.END).strip()
             if description:
                 selected_date = datetime(self.current_date.year, self.current_date.month, self.selected_date)
-                self.schedule_manager.set_event(selected_date.date(), description)
+                is_birthday = "Happy Birthday!" in description
+                person_name = self.get_person_name(description)
+                self.schedule_manager.set_event(selected_date.date(), description, is_birthday, person_name)
                 self.update_calendar()
+
+    def get_person_name(self, description):
+        name_start = description.rfind("(")
+        name_end = description.rfind(")")
+        if name_start != -1 and name_end != -1:
+            return description[name_start + 1:name_end]
+        else:
+            return None
 
     def select_date(self, day):
         self.selected_date = day
@@ -87,18 +103,62 @@ class CalendarGUI:
             selected_date = datetime(self.current_date.year, self.current_date.month, self.selected_date).date()
             events = self.schedule_manager.get_events(selected_date)
             if events:
-                event_text = "\n".join(events)
-                self.event_display.insert(tk.END, f"Events for {selected_date}:\n{event_text}")
-                self.event_display.tag_add("event", "3.0", tk.END)
-                self.event_display.tag_config("event", foreground="blue")
-            else:
-                self.event_display.insert(tk.END, f"No events for {selected_date}.")
+                for event, is_birthday, person_name in events:
+                    if is_birthday:
+                        self.event_display.insert(tk.END, f"{event} ({person_name})\nHappy Birthday!\n\n")
+                        self.event_display.tag_add("birthday", "3.0", tk.END)
+                        self.event_display.tag_config("birthday", foreground="red")
+                    else:
+                        event_text = "\n".join([f"{event} ({person_name})" for event, _, person_name in events])
+                        self.event_display.insert(tk.END, f"Events for {selected_date}:\n{event_text}")
+                        self.event_display.tag_add("event", "3.0", tk.END)
+                        self.event_display.tag_config("event", foreground="blue")
         else:
             self.event_display.insert(tk.END, "Select a date to display events.")
 
     def show_all_events(self):
-        all_events = self.schedule_manager.show_all_events(self.current_date.replace(day=1).date())
+        all_events = []
+        for day in range(1, calendar.monthrange(self.current_date.year, self.current_date.month)[1] + 1):
+            date = datetime(self.current_date.year, self.current_date.month, day).date()
+            events = self.schedule_manager.get_events(date)
+
+            if events:
+                for event, is_birthday, person_name in events:
+                    if is_birthday:
+                        # Check if the birthday is in the future, if not, add it for the next year
+                        if date >= datetime.today().date():
+                            all_events.append(f"{event} ({person_name})")
+                        else:
+                            next_year_date = datetime(self.current_date.year + 1, self.current_date.month, day).date()
+                            all_events.append(f"{event} ({person_name}) - Next year on {next_year_date}")
+                    else:
+                        all_events.append(f"{event} ({person_name})")
+
         self.event_display.delete(1.0, tk.END)
-        self.event_display.insert(tk.END, all_events)
-        self.event_display.tag_add("event", "1.0", tk.END)
-        self.event_display.tag_config("event", foreground="green")
+        if all_events:
+            self.event_display.insert(tk.END, "\n".join(all_events))
+            self.event_display.tag_add("event", "1.0", tk.END)
+            self.event_display.tag_config("event", foreground="green")
+
+    def add_birthday(self):
+        person_name = askstring("Input", "Enter person's name:")
+        if person_name:
+            birthday_description = f"Happy Birthday! ({person_name})"
+            self.event_display.delete(1.0, tk.END)
+            self.event_display.insert(tk.END, birthday_description)
+            self.save_event()
+
+if __name__ == "__main__":
+    import tkinter as tk
+    from schedule import Schedule
+
+    def main():
+        root = tk.Tk()
+        root.title("Desktop Calendar")
+
+        schedule_manager = Schedule()
+        calendar_gui = CalendarGUI(root, schedule_manager)
+
+        root.mainloop()
+
+    main()
