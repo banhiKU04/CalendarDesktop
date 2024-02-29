@@ -1,7 +1,5 @@
-# schedule.py
-from datetime import datetime, timedelta
 from event import Event
-import calendar
+from datetime import datetime
 
 class Schedule:
     def __init__(self):

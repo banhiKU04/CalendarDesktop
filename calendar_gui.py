@@ -1,4 +1,3 @@
-# calendar_gui.py
 import tkinter as tk
 import calendar
 from datetime import datetime, timedelta
@@ -6,6 +5,8 @@ from event import Event
 from schedule import Schedule
 from tkinter.simpledialog import askstring
 from tkinter import messagebox
+from birthday import is_birthday_today, get_birthday_person
+
 
 class CalendarGUI:
     def __init__(self, master, schedule_manager):
@@ -47,12 +48,16 @@ class CalendarGUI:
         self.update_calendar()
 
     def update_calendar(self):
-        self.label_month_year.config(text=calendar.month_name[self.current_date.month] + " " + str(self.current_date.year))
+        self.label_month_year.config(
+            text=calendar.month_name[self.current_date.month] + " " + str(self.current_date.year))
 
         month_calendar = calendar.monthcalendar(self.current_date.year, self.current_date.month)
 
-        for widget in self.calendar_frame.winfo_children():
-            widget.destroy()
+        # Display the days of the week above the dates
+        days_of_week = [calendar.day_abbr[i] for i in range(7)]
+        for col, day in enumerate(days_of_week):
+            day_label = tk.Label(self.calendar_frame, text=day, fg="blue")  # Change the color to blue
+            day_label.grid(row=0, column=col)
 
         for week in month_calendar:
             for day in week:
@@ -64,7 +69,7 @@ class CalendarGUI:
                     if datetime(self.current_date.year, self.current_date.month, day).date() == datetime.today().date():
                         label.config(bg="yellow")
 
-                label.grid(row=month_calendar.index(week), column=week.index(day))
+                label.grid(row=month_calendar.index(week) + 1, column=week.index(day))
 
         self.display_events()
 
@@ -114,17 +119,21 @@ class CalendarGUI:
         if self.selected_date:
             selected_date = datetime(self.current_date.year, self.current_date.month, self.selected_date).date()
             events = self.schedule_manager.get_events(selected_date)
-            if events:
-                for event, is_birthday, person_name in events:
-                    if is_birthday:
-                        self.event_display.insert(tk.END, f"{event} ({person_name})\nHappy Birthday!\n\n")
-                        self.event_display.tag_add("birthday", "3.0", tk.END)
-                        self.event_display.tag_config("birthday", foreground="red")
-                    else:
-                        event_text = "\n".join([f"{event} ({person_name})" for event, _, person_name in events])
-                        self.event_display.insert(tk.END, f"Events for {selected_date}:\n{event_text}")
-                        self.event_display.tag_add("event", "3.0", tk.END)
-                        self.event_display.tag_config("event", foreground="blue")
+
+            if is_birthday_today(events):
+                birthday_person = get_birthday_person(events)
+                self.event_display.insert(tk.END, f"Happy Birthday, {birthday_person}!\n")
+                self.event_display.tag_add("birthday", "1.0", tk.END)
+                self.event_display.tag_config("birthday", foreground="red")
+
+            elif events:
+                for event, _, person_name in events:
+                    event_text = f"{event} ({person_name})"
+                    self.event_display.insert(tk.END, f"{event_text}\n")
+                    self.event_display.tag_add("event", "1.0", tk.END)
+                    self.event_display.tag_config("event", foreground="blue")
+            else:
+                self.event_display.insert(tk.END, f"No events for {selected_date}")
         else:
             self.event_display.insert(tk.END, "Select a date to display events.")
 
