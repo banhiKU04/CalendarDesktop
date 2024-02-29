@@ -44,6 +44,11 @@ class CalendarGUI:
 
         self.next_year_button = tk.Button(self.master, text="Next Year", command=self.next_year)
         self.next_year_button.pack(side=tk.RIGHT)
+        self.prev_month_button = tk.Button(self.master, text="Previous Month", command=self.prev_month)
+        self.prev_month_button.pack(side=tk.LEFT)
+
+        self.next_month_button = tk.Button(self.master, text="Next Month", command=self.next_month)
+        self.next_month_button.pack(side=tk.RIGHT)
 
         self.update_calendar()
 
@@ -66,6 +71,13 @@ class CalendarGUI:
                 else:
                     label = tk.Label(self.calendar_frame, text=str(day))
                     label.bind("<Button-1>", lambda event, d=day: self.select_date(d))
+
+                    # Set background color for Saturdays (index 5) and Fridays (index 4)
+                    if week.index(day) == 5:  # Saturday
+                        label.config(bg="Red")
+                    elif week.index(day) == 4:  # Friday
+                        label.config(bg="Red")
+
                     if datetime(self.current_date.year, self.current_date.month, day).date() == datetime.today().date():
                         label.config(bg="yellow")
 
@@ -85,11 +97,21 @@ class CalendarGUI:
         self.update_calendar()
 
     def prev_year(self):
-        self.current_date = self.current_date.replace(year=self.current_date.year - 1)
+        # Set the current date to the last day of the previous year
+        self.current_date = self.current_date.replace(
+            year=self.current_date.year - 1,
+            month=12,
+            day=calendar.monthrange(self.current_date.year - 1, 12)[1]
+        )
         self.update_calendar()
 
     def next_year(self):
-        self.current_date = self.current_date.replace(year=self.current_date.year + 1)
+        # Set the current date to the last day of the next year
+        self.current_date = self.current_date.replace(
+            year=self.current_date.year + 1,
+            month=1,
+            day=calendar.monthrange(self.current_date.year + 1, 1)[1]
+        )
         self.update_calendar()
 
     def save_event(self):
