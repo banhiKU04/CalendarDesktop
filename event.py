@@ -37,5 +37,3 @@ class Event:
                     all_events.append(event_text)
 
         return "\n".join(all_events)
-
-

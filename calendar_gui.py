@@ -1,12 +1,10 @@
 import tkinter as tk
-import calendar
 from datetime import datetime, timedelta
-from event import Event
-from schedule import Schedule
 from tkinter.simpledialog import askstring
 from tkinter import messagebox
-from birthday import is_birthday_today, get_birthday_person
-
+from threading import Thread
+import calendar
+import winsound
 
 class CalendarGUI:
     def __init__(self, master, schedule_manager):
@@ -39,18 +37,26 @@ class CalendarGUI:
         self.check_birthday_button = tk.Button(self.master, text="Check Birthday", command=self.check_birthday)
         self.check_birthday_button.pack()
 
+        self.set_alarm_button = tk.Button(self.master, text="Set Alarm", command=self.set_alarm)
+        self.set_alarm_button.pack()
+
         self.prev_year_button = tk.Button(self.master, text="Previous Year", command=self.prev_year)
         self.prev_year_button.pack(side=tk.LEFT)
 
         self.next_year_button = tk.Button(self.master, text="Next Year", command=self.next_year)
         self.next_year_button.pack(side=tk.RIGHT)
+
         self.prev_month_button = tk.Button(self.master, text="Previous Month", command=self.prev_month)
         self.prev_month_button.pack(side=tk.LEFT)
 
         self.next_month_button = tk.Button(self.master, text="Next Month", command=self.next_month)
         self.next_month_button.pack(side=tk.RIGHT)
 
+
+
         self.update_calendar()
+
+    # Inside the CalendarGUI class in calendar_gui.py
 
     def update_calendar(self):
         self.label_month_year.config(
@@ -66,9 +72,7 @@ class CalendarGUI:
 
         for week in month_calendar:
             for day in week:
-                if day == 0:
-                    label = tk.Label(self.calendar_frame, text="")
-                else:
+                if day != 0:
                     label = tk.Label(self.calendar_frame, text=str(day))
                     label.bind("<Button-1>", lambda event, d=day: self.select_date(d))
 
@@ -78,10 +82,16 @@ class CalendarGUI:
                     elif week.index(day) == 4:  # Friday
                         label.config(bg="Red")
 
-                    if datetime(self.current_date.year, self.current_date.month, day).date() == datetime.today().date():
+                    current_date = datetime(self.current_date.year, self.current_date.month, day).date()
+
+                    # Check if the date is a public holiday
+                    if current_date in self.schedule_manager.public_holidays:
+                        label.config(bg="LightGreen")  # Adjust color as needed
+
+                    if current_date == datetime.today().date():
                         label.config(bg="yellow")
 
-                label.grid(row=month_calendar.index(week) + 1, column=week.index(day))
+                    label.grid(row=month_calendar.index(week) + 1, column=week.index(day))
 
         self.display_events()
 
@@ -97,7 +107,6 @@ class CalendarGUI:
         self.update_calendar()
 
     def prev_year(self):
-        # Set the current date to the last day of the previous year
         self.current_date = self.current_date.replace(
             year=self.current_date.year - 1,
             month=12,
@@ -106,7 +115,6 @@ class CalendarGUI:
         self.update_calendar()
 
     def next_year(self):
-        # Set the current date to the last day of the next year
         self.current_date = self.current_date.replace(
             year=self.current_date.year + 1,
             month=1,
@@ -142,8 +150,8 @@ class CalendarGUI:
             selected_date = datetime(self.current_date.year, self.current_date.month, self.selected_date).date()
             events = self.schedule_manager.get_events(selected_date)
 
-            if is_birthday_today(events):
-                birthday_person = get_birthday_person(events)
+            if self.is_birthday_today(events):
+                birthday_person = self.get_birthday_person(events)
                 self.event_display.insert(tk.END, f"Happy Birthday, {birthday_person}!\n")
                 self.event_display.tag_add("birthday", "1.0", tk.END)
                 self.event_display.tag_config("birthday", foreground="red")
@@ -155,7 +163,13 @@ class CalendarGUI:
                     self.event_display.tag_add("event", "1.0", tk.END)
                     self.event_display.tag_config("event", foreground="blue")
             else:
-                self.event_display.insert(tk.END, f"No events for {selected_date}")
+                self.event_display.insert(tk.END, f" {selected_date}")
+
+                if selected_date in self.schedule_manager.public_holidays:
+                    holiday_name = self.schedule_manager.public_holidays[selected_date]
+                    self.event_display.insert(tk.END, f"Public Holiday: {holiday_name}\n")
+                    self.event_display.tag_add("public_holiday", "1.0", tk.END)
+                    self.event_display.tag_config("public_holiday", foreground="green")
         else:
             self.event_display.insert(tk.END, "Select a date to display events.")
 
@@ -185,6 +199,61 @@ class CalendarGUI:
                 messagebox.showinfo("Birthday Checker", "No birthdays on this date.")
         else:
             messagebox.showinfo("Birthday Checker", "Select a date to check birthdays.")
+
+    def set_alarm(self):
+        alarm_time_str = askstring("Set Alarm", "Enter alarm time (hh:mm AM/PM):")
+        if alarm_time_str:
+            try:
+                alarm_time = datetime.strptime(alarm_time_str, "%I:%M %p").time()
+                self.schedule_alarm(alarm_time)
+                messagebox.showinfo("Alarm Set", f"Alarm set for {alarm_time_str}")
+            except ValueError:
+                messagebox.showerror("Invalid Time", "Please enter a valid time in the format hh:mm AM/PM")
+
+    def schedule_alarm(self, alarm_time):
+        current_date = datetime.now().date()
+        current_time = datetime.now().time()
+        alarm_datetime = datetime.combine(current_date, alarm_time)
+
+        # Check if the alarm time is in the past
+        if current_date == alarm_datetime.date() and current_time >= alarm_time:
+            messagebox.showwarning("Invalid Time", "Please set the alarm for a future time.")
+        else:
+            alarm_thread = Thread(target=self.run_alarm, args=(alarm_datetime,))
+            alarm_thread.start()
+
+    def run_alarm(self, alarm_datetime):
+        current_datetime = datetime.now()
+        delay_seconds = (alarm_datetime - current_datetime).total_seconds()
+        delay_seconds = max(0, delay_seconds)
+
+        import time
+        time.sleep(delay_seconds)
+
+        winsound.Beep(2000, 2000)
+        messagebox.showinfo("Alarm", "Time to wake up!")
+    @staticmethod
+    def is_birthday_today(events):
+        today = datetime.today().date()
+
+        for event, is_birthday, person_name in events:
+            if is_birthday:
+                try:
+                    birthdate_str = event.split("(")[-1].split(")")[0].strip()
+                    birthdate = datetime.strptime(birthdate_str, "%Y-%m-%d").date()
+                    if birthdate.day == today.day and birthdate.month == today.month:
+                        return True
+                except ValueError:
+                    print(f"Invalid date string: {event}")
+
+        return False
+
+    @staticmethod
+    def get_birthday_person(events):
+        for event in events:
+            if event[1]:
+                return event[2]
+        return None
 
 if __name__ == "__main__":
     import tkinter as tk
