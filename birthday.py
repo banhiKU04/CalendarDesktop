@@ -12,7 +12,7 @@ def is_birthday_today(events):
                 if birthdate.day == today.day and birthdate.month == today.month:
                     return True
             except ValueError:
-                # Handle invalid date strings
+
                 print(f"Invalid date string: {event}")
 
     return False
