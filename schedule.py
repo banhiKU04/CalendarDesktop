@@ -29,3 +29,4 @@ class Schedule:
 
     def show_all_events(self, month):
         return self.event_manager.show_all_events(month)
+

@@ -55,14 +55,14 @@ class CalendarGUI:
         self.prev_year_button.pack(side=tk.LEFT, padx=5, pady=5)
 
         self.prev_month_button = tk.Button(nav_button_frame, text="Previous Month", command=self.prev_month,
-                                           bg="#FFD700", font=modern_font)
+                                           bg="#98FB98", font=modern_font)
         self.prev_month_button.pack(side=tk.LEFT, padx=5)
 
         self.next_month_button = tk.Button(nav_button_frame, text="Next Month", command=self.next_month,
                                            bg="#98FB98",font=modern_font)  # Pale Green
         self.next_month_button.pack(side=tk.RIGHT, padx=5)
 
-        self.next_year_button = tk.Button(nav_button_frame, text="Next Year", command=self.next_year, bg="#98FB98",font=modern_font)
+        self.next_year_button = tk.Button(nav_button_frame, text="Next Year", command=self.next_year, bg="#FFD700",font=modern_font)
         self.next_year_button.pack(side=tk.RIGHT, padx=5)
 
         # Create a frame for the additional buttons
@@ -74,7 +74,7 @@ class CalendarGUI:
         self.todo_button.pack(side=tk.LEFT, padx=5)
 
         self.add_birthday_button = tk.Button(additional_button_frame, text="Add Birthday", command=self.add_birthday,
-                                             bg="#FF69B4", font=modern_font)
+                                             bg="#98FB98", font=modern_font)
         self.add_birthday_button.pack(side=tk.LEFT, padx=5)
 
         self.set_alarm_button = tk.Button(additional_button_frame, text="Set Alarm", command=self.set_alarm,
@@ -90,8 +90,9 @@ class CalendarGUI:
         event_display_frame.pack(pady=10)
 
         # Display the event text box
-        self.event_display = tk.Text(event_display_frame, height=10, width=40, wrap=tk.WORD, bg="#FFFFFF")
-        self.event_display.pack()
+        self.event_display = tk.Text(event_display_frame, height=10, width=40, wrap=tk.WORD, bg="#FFFFFF",
+                                     font=("Arial", 12))
+        self.event_display.pack(pady=5)
 
         # Create a frame for the save event button
         save_event_frame = tk.Frame(self.master, bg="#E0E0E0")  # Light Gray
@@ -106,6 +107,18 @@ class CalendarGUI:
                                                command=self.check_birthday, bg="#e74c3c", font=modern_font,
                                                fg="white")  # Red background
         self.check_birthday_button.pack(side=tk.LEFT, padx=5)
+
+        reminder_frame = tk.Frame(self.master, bg="#E0E0E0")
+        reminder_frame.pack(pady=10)
+
+        # Add entry for reminder message
+        self.reminder_entry = tk.Entry(reminder_frame, width=40, font=("Arial", 12))
+        self.reminder_entry.pack(side=tk.LEFT, padx=5)
+
+        # Add button to set reminder
+        set_reminder_button = tk.Button(reminder_frame, text="Set Reminder", command=self.set_reminder,
+                                        bg="#87CEEB", font=("Arial", 12))
+        set_reminder_button.pack(side=tk.LEFT, padx=5)
 
         self.update_calendar()
 
@@ -332,6 +345,40 @@ class CalendarGUI:
         if new_todo:
             self.todo_display.insert(tk.END, f"{new_todo}\n")
             self.new_todo_entry.delete(0, tk.END)
+
+    def set_reminder(self):
+        reminder_message = self.reminder_entry.get().strip()
+
+        if reminder_message:
+            try:
+                reminder_time_str = askstring("Set Reminder Time", "Enter reminder time (hh:mm AM/PM):")
+
+                if reminder_time_str:
+                    reminder_datetime = datetime.strptime(reminder_time_str, "%I:%M %p").time()
+
+                    reminder_thread = Thread(target=self.run_reminder, args=(reminder_message, reminder_datetime))
+                    reminder_thread.start()
+
+                    messagebox.showinfo("Reminder Set", f"Reminder set for {reminder_time_str}")
+
+            except ValueError:
+                messagebox.showerror("Invalid Time", "Please enter a valid time in the format hh:mm AM/PM")
+
+    def run_reminder(self, reminder_message, reminder_datetime):
+        current_datetime = datetime.now()
+        current_time = current_datetime.time()
+        reminder_time = datetime.combine(datetime.today(), reminder_datetime)
+
+        if current_datetime >= reminder_time:
+            messagebox.showwarning("Invalid Time", "Please set the reminder for a future time.")
+        else:
+            delay_seconds = (reminder_time - current_datetime).total_seconds()
+            delay_seconds = max(0, delay_seconds)
+
+            import time
+            time.sleep(delay_seconds)
+
+            messagebox.showinfo("Reminder", reminder_message)
 
 
 if __name__ == "__main__":
