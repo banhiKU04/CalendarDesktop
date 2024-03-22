@@ -1,5 +1,6 @@
 from datetime import datetime
 import calendar
+import tkinter as tk
 
 class Event:
     def __init__(self):
@@ -13,7 +14,7 @@ class Event:
     def get_events(self, date):
         return [(event["description"], event["is_birthday"], event["person_name"]) for event in self.events.get(date, [])]
 
-    # Inside the Event class in event.py
+
 
     def show_all_events(self, month):
         all_events = []
@@ -25,15 +26,38 @@ class Event:
 
             if events:
                 for event in events:
-                    person_name = event[2] if event[2] is not None else ''  # Return empty string if the name is None
+                    person_name = event[2] if event[2] is not None else ''
                     event_text = f"{event[0]} ({date} - {calendar.day_name[date.weekday()]} - {person_name})"
 
-                    if event[1]:
-                        next_year_date = datetime(month.year + 1, month.month, day).date()
-                        event_text += f" - Next year on {next_year_date}"
-                    elif date == today_date:
-                        event_text += " - Today is the birthday!"
+                    switch = {
+                        event[1]: f" - Next year on {datetime(month.year + 1, month.month, day).date()}",
+                        date == today_date: " - Today is the birthday!"
+                    }
+
+                    for condition, message in switch.items():
+                        if condition:
+                            event_text += message
+                            break
 
                     all_events.append(event_text)
 
         return "\n".join(all_events)
+
+    def save_event(self):
+        if self.selected_date:
+            description = self.event_display.get("1.0", tk.END).strip()
+            if description:
+                selected_date = datetime(self.current_date.year, self.current_date.month, self.selected_date)
+                is_birthday = "Happy Birthday!" in description
+                person_name = self.get_person_name(description)
+                self.schedule_manager.set_event(selected_date.date(), description, is_birthday, person_name)
+                self.update_calendar()
+
+
+
+
+    def save_events_to_file(self, filename):
+        with open(filename, 'w') as file:
+            for date, events in self.events.items():
+                for event in events:
+                    file.write(f"{date}: {event['description']}, {event['is_birthday']}, {event['person_name']}\n")
