@@ -4,12 +4,12 @@ from tkinter.simpledialog import askstring
 from tkinter import messagebox
 from threading import Thread
 import calendar
-import winsound
-from tkinter import PhotoImage
+from reminder import ReminderManager
+from alarm import AlarmManager
+from birthday import BirthdayManager
+from todolist import TodoManager
 
-
-
-class CalendarGUI:
+class CalendarGUI(tk.Tk,  ReminderManager, AlarmManager, BirthdayManager, TodoManager):
     def __init__(self, master, schedule_manager):
         self.master = master
         self.schedule_manager = schedule_manager
@@ -249,136 +249,7 @@ class CalendarGUI:
             self.event_display.tag_add("event", "1.0", tk.END)
             self.event_display.tag_config("event", foreground="green")
 
-    def add_birthday(self):
-        person_name = askstring("Input", "Enter person's name:")
-        if person_name:
-            birthday_description = f"Happy Birthday! ({person_name})"
-            self.event_display.delete(1.0, tk.END)
-            self.event_display.insert(tk.END, birthday_description)
-            self.save_event()
 
-    def check_birthday(self):
-        if self.selected_date:
-            selected_date = datetime(self.current_date.year, self.current_date.month, self.selected_date).date()
-            events = self.schedule_manager.get_events(selected_date)
-            if any(event[1] for event in events):  # Check if there are birthdays
-                messagebox.showinfo("Birthday Checker", "This date has birthdays!")
-            else:
-                messagebox.showinfo("Birthday Checker", "No birthdays on this date.")
-        else:
-            messagebox.showinfo("Birthday Checker", "Select a date to check birthdays.")
-
-    def set_alarm(self):
-        alarm_time_str = askstring("Set Alarm", "Enter alarm time (hh:mm AM/PM):")
-        if alarm_time_str:
-            try:
-                alarm_time = datetime.strptime(alarm_time_str, "%I:%M %p").time()
-                self.schedule_alarm(alarm_time)
-                messagebox.showinfo("Alarm Set", f"Alarm set for {alarm_time_str}")
-            except ValueError:
-                messagebox.showerror("Invalid Time", "Please enter a valid time in the format hh:mm AM/PM")
-
-    def schedule_alarm(self, alarm_time):
-        current_date = datetime.now().date()
-        current_time = datetime.now().time()
-        alarm_datetime = datetime.combine(current_date, alarm_time)
-
-        # Check if the alarm time is in the past
-        if current_date == alarm_datetime.date() and current_time >= alarm_time:
-            messagebox.showwarning("Invalid Time", "Please set the alarm for a future time.")
-        else:
-            alarm_thread = Thread(target=self.run_alarm, args=(alarm_datetime,))
-            alarm_thread.start()
-
-    def run_alarm(self, alarm_datetime):
-        current_datetime = datetime.now()
-        delay_seconds = (alarm_datetime - current_datetime).total_seconds()
-        delay_seconds = max(0, delay_seconds)
-
-        import time
-        time.sleep(delay_seconds)
-
-        winsound.Beep(2000, 2000)
-        messagebox.showinfo("Alarm", "Time to wake up!")
-    @staticmethod
-    def is_birthday_today(events):
-        today = datetime.today().date()
-
-        for event, is_birthday, person_name in events:
-            if is_birthday:
-                try:
-                    birthdate_str = event.split("(")[-1].split(")")[0].strip()
-                    birthdate = datetime.strptime(birthdate_str, "%Y-%m-%d").date()
-                    if birthdate.day == today.day and birthdate.month == today.month:
-                        return True
-                except ValueError:
-                    print(f"Invalid date string: {event}")
-
-        return False
-
-    @staticmethod
-    def get_birthday_person(events):
-        for event in events:
-            if event[1]:
-                return event[2]
-        return None
-
-    def manage_todo_list(self):
-        # Create a new window for managing to-do list
-        todo_window = tk.Toplevel(self.master)
-        todo_window.title("To-Do List")
-
-        # Create a Text widget for displaying to-do items
-        self.todo_display = tk.Text(todo_window, height=10, width=40, wrap=tk.WORD)
-        self.todo_display.pack()
-
-        # Create an entry for adding new to-do items
-        self.new_todo_entry = tk.Entry(todo_window, width=40)
-        self.new_todo_entry.pack()
-
-        # Create a button to add a new to-do item
-        add_todo_button = tk.Button(todo_window, text="Add To-Do", command=self.add_todo)
-        add_todo_button.pack()
-
-    def add_todo(self):
-        new_todo = self.new_todo_entry.get().strip()
-        if new_todo:
-            self.todo_display.insert(tk.END, f"{new_todo}\n")
-            self.new_todo_entry.delete(0, tk.END)
-
-    def set_reminder(self):
-        reminder_message = self.reminder_entry.get().strip()
-
-        if reminder_message:
-            try:
-                reminder_time_str = askstring("Set Reminder Time", "Enter reminder time (hh:mm AM/PM):")
-
-                if reminder_time_str:
-                    reminder_datetime = datetime.strptime(reminder_time_str, "%I:%M %p").time()
-
-                    reminder_thread = Thread(target=self.run_reminder, args=(reminder_message, reminder_datetime))
-                    reminder_thread.start()
-
-                    messagebox.showinfo("Reminder Set", f"Reminder set for {reminder_time_str}")
-
-            except ValueError:
-                messagebox.showerror("Invalid Time", "Please enter a valid time in the format hh:mm AM/PM")
-
-    def run_reminder(self, reminder_message, reminder_datetime):
-        current_datetime = datetime.now()
-        current_time = current_datetime.time()
-        reminder_time = datetime.combine(datetime.today(), reminder_datetime)
-
-        if current_datetime >= reminder_time:
-            messagebox.showwarning("Invalid Time", "Please set the reminder for a future time.")
-        else:
-            delay_seconds = (reminder_time - current_datetime).total_seconds()
-            delay_seconds = max(0, delay_seconds)
-
-            import time
-            time.sleep(delay_seconds)
-
-            messagebox.showinfo("Reminder", reminder_message)
 
 
 if __name__ == "__main__":
