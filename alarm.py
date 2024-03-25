@@ -1,11 +1,11 @@
-import tkinter as tk
-from datetime import datetime, timedelta
+import winsound
+from datetime import datetime
+from threading import Thread
 from tkinter.simpledialog import askstring
 from tkinter import messagebox
-import winsound
-from threading import Thread
+import os
 
-class  AlarmManager:
+class AlarmManager:
     def set_alarm(self):
         alarm_time_str = askstring("Set Alarm", "Enter alarm time (hh:mm AM/PM):")
         if alarm_time_str:
@@ -29,12 +29,20 @@ class  AlarmManager:
             alarm_thread.start()
 
     def run_alarm(self, alarm_datetime):
-        current_datetime = datetime.now()
-        delay_seconds = (alarm_datetime - current_datetime).total_seconds()
-        delay_seconds = max(0, delay_seconds)
+        try:
+            current_datetime = datetime.now()
+            delay_seconds = (alarm_datetime - current_datetime).total_seconds()
+            delay_seconds = max(0, delay_seconds)
 
-        import time
-        time.sleep(delay_seconds)
+            import time
+            time.sleep(delay_seconds)
 
-        winsound.Beep(2000, 2000)
-        messagebox.showinfo("Alarm", "Time to wake up!")
+
+            winsound.PlaySound(
+                r"C:\Users\Lenovo\Downloads\Music\Free Intro Track - East River (Intro A - 6 seconds).wav",
+                winsound.SND_FILENAME)
+
+            messagebox.showinfo("Alarm", "Time to wake up!")
+
+        except Exception as e:
+            messagebox.showerror("Alarm Error", f"An error occurred while running the alarm: {str(e)}")
