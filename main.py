@@ -1,4 +1,3 @@
-
 import tkinter as tk
 from controller.calendar_gui import CalendarGUI
 from Model.schedule import Schedule
