@@ -1,5 +1,4 @@
-from event import Event
-from datetime import datetime
+from Model.event import Event
 from datetime import date
 class Schedule:
     def __init__(self):
@@ -10,6 +9,7 @@ class Schedule:
             date(2024, 3, 26): "Independence Day",
             date(2024, 4, 14): "Bengali new year Day",
             date(2024, 12, 16): "Victory Day",
+            date(2024, 4, 11): "Eid-Ul-Fitor",
 
             # Add more public holidays as needed
         }

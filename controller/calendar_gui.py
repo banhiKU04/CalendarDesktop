@@ -1,16 +1,14 @@
 import tkinter as tk
-import calendar
-from threading import Thread
-from datetime import datetime, timedelta
-from alarm import AlarmManager
-from todolist import TodoManager
-from reminder import ReminderManager
-from birthday import BirthdayManager
-from navigation import Navigation
+from datetime import datetime
+from Model.alarm import AlarmManager
+from Model.todolist import TodoManager
+from Model.reminder import ReminderManager
+from Model.birthday import BirthdayManager
+from controller.navigation  import Navigation
 from updateCalendar import UpdateManager
-from displayEvent import DisplayManager
-from setupGui import gui
-from event import Event
+from View.displayEvent import DisplayManager
+from View.setupGui import gui
+from Model.event import Event
 
 
 class CalendarGUI(tk.Tk, AlarmManager, ReminderManager, TodoManager, BirthdayManager, Navigation, UpdateManager, DisplayManager, gui, Event):

@@ -1,7 +1,7 @@
 
 import tkinter as tk
-from calendar_gui import CalendarGUI
-from schedule import Schedule
+from controller.calendar_gui import CalendarGUI
+from Model.schedule import Schedule
 
 def main():
     root = tk.Tk()

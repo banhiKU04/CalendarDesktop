@@ -8,7 +8,7 @@ class TodoManager:
 
     def manage_todo_list(self):
         # Create a new window for managing to-do list
-        todo_window = tk.Toplevel(self.master)
+        todo_window = tk.Toplevel()
         todo_window.title("To-Do List")
 
         # Create a Text widget for displaying to-do items

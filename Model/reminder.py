@@ -5,8 +5,14 @@ from tkinter import messagebox
 from threading import Thread
 
 
+
+
 class ReminderManager:
+    def __init__(self):
+        self.reminder_entry = tk.Entry()
+
     def set_reminder(self):
+
         reminder_message = self.reminder_entry.get().strip()
 
         if reminder_message:
@@ -23,6 +29,7 @@ class ReminderManager:
 
             except ValueError:
                 messagebox.showerror("Invalid Time", "Please enter a valid time in the format hh:mm AM/PM")
+
 
     def run_reminder(self, reminder_message, reminder_datetime):
         current_datetime = datetime.now()
