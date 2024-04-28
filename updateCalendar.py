@@ -39,5 +39,3 @@ class UpdateManager:
                     label.grid(row=month_calendar.index(week) + 1, column=week.index(day))
 
         self.display_events()
-
-

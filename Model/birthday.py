@@ -3,16 +3,20 @@ from tkinter import messagebox
 import tkinter as tk
 from tkinter.simpledialog import askstring
 
+
 class BirthdayManager:
-    def __init__(self):
-        pass
+    def __init__(self, event_display=None):
+        self.event_display = event_display
 
     def add_birthday(self):
+        if not self.event_display:
+            raise ValueError("Event display is not set")
+
         person_name = askstring("Input", "Enter person's name:")
-        if person_name:
+        if not person_name:
+            raise ValueError("Person's name cannot be empty")
+        else:
             birthday_description = f"Happy Birthday! ({person_name})"
-            # Assuming you have a reference to event_display in your CalendarGUI
-            # You may need to pass it as a parameter or set it after creating the CalendarGUI object
             self.event_display.delete(1.0, tk.END)
             self.event_display.insert(tk.END, birthday_description)
             self.save_event()

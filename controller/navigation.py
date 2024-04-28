@@ -4,6 +4,13 @@ from datetime import datetime, timedelta
 
 
 class Navigation:
+    def __init__(self, schedule_manager, event_display):
+        self.schedule_manager = schedule_manager
+        self.event_display = event_display
+        self.current_date = datetime.now()
+
+
+
     def prev_month(self):
         self.current_date = self.current_date.replace(day=1)
         self.current_date -= timedelta(days=1)
@@ -33,13 +40,9 @@ class Navigation:
 
     def show_all_events(self):
         all_events_text = self.schedule_manager.show_all_events(self.current_date)
-        self.event_display.delete(1.0, tk.END)
         if all_events_text:
+            self.event_display.delete(1.0, tk.END)
             self.event_display.insert(tk.END, all_events_text)
             self.event_display.tag_add("event", "1.0", tk.END)
             self.event_display.tag_config("event", foreground="green")
-
-
-
-
 
