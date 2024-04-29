@@ -1,0 +1,5 @@
+2024-04-25: bbb, False, None
+2024-04-25: Happy Birthday! (Sam), True, Sam
+2024-04-14: Public Holiday: Bengali new year Day, False, None
+2024-04-30: Happy Birthday! (mm), True, mm
+2024-04-29: SDP Labfinal, False, None
